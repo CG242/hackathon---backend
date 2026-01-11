@@ -22,7 +22,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connecté: ${client.id}`);
-    client.emit('connected', { message: 'Connecté au serveur d\'événements' });
+    client.emit('connected', { message: "Connecté au serveur d'événements" });
   }
 
   handleDisconnect(client: Socket) {
@@ -76,4 +76,3 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log('Événement stats-update émis');
   }
 }
-

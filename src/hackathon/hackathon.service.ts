@@ -24,9 +24,13 @@ export class HackathonService {
 
     const maintenant = new Date();
     const dateLimite = new Date(hackathon.dateLimiteInscription);
-    const compteARebours = dateLimite > maintenant 
-      ? Math.max(0, Math.floor((dateLimite.getTime() - maintenant.getTime()) / 1000))
-      : 0;
+    const compteARebours =
+      dateLimite > maintenant
+        ? Math.max(
+            0,
+            Math.floor((dateLimite.getTime() - maintenant.getTime()) / 1000),
+          )
+        : 0;
 
     return {
       id: hackathon.id,
@@ -38,6 +42,53 @@ export class HackathonService {
       status: hackathon.status,
       compteARebours: compteARebours, // en secondes
     };
+  }
+
+  /**
+   * Récupérer tous les hackathons disponibles pour inscription (UPCOMING ou ONGOING)
+   */
+  async getAvailableHackathons() {
+    const maintenant = new Date();
+
+    const hackathons = await this.prisma.hackathon.findMany({
+      where: {
+        status: {
+          in: [HackathonStatus.UPCOMING, HackathonStatus.ONGOING],
+        },
+        dateLimiteInscription: {
+          gte: maintenant, // Seulement ceux où la date limite n'est pas dépassée
+        },
+      },
+      orderBy: {
+        dateDebut: 'asc',
+      },
+      select: {
+        id: true,
+        nom: true,
+        description: true,
+        dateDebut: true,
+        dateFin: true,
+        dateLimiteInscription: true,
+        status: true,
+      },
+    });
+
+    // Ajouter le compte à rebours pour chaque hackathon
+    return hackathons.map((hackathon) => {
+      const dateLimite = new Date(hackathon.dateLimiteInscription);
+      const compteARebours =
+        dateLimite > maintenant
+          ? Math.max(
+              0,
+              Math.floor((dateLimite.getTime() - maintenant.getTime()) / 1000),
+            )
+          : 0;
+
+      return {
+        ...hackathon,
+        compteARebours,
+      };
+    });
   }
 
   async getPastHackathons(page: number = 1, limit: number = 10, year?: number) {
@@ -137,7 +188,9 @@ export class HackathonService {
         ...(updateDto.description && { description: updateDto.description }),
         ...(updateDto.dateDebut && { dateDebut: updateDto.dateDebut }),
         ...(updateDto.dateFin && { dateFin: updateDto.dateFin }),
-        ...(updateDto.dateLimiteInscription && { dateLimiteInscription: updateDto.dateLimiteInscription }),
+        ...(updateDto.dateLimiteInscription && {
+          dateLimiteInscription: updateDto.dateLimiteInscription,
+        }),
         ...(updateDto.status && { status: updateDto.status }),
       },
     });
@@ -153,4 +206,3 @@ export class HackathonService {
     return { message: 'Hackathon supprimé avec succès' };
   }
 }
-

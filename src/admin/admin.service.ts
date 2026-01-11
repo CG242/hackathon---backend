@@ -1,4 +1,10 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  forwardRef,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { HackathonStatus, TypeIALog } from '@prisma/client';
 import { EventsGateway } from '../events/events.gateway';
@@ -10,6 +16,203 @@ export class AdminService {
     @Inject(forwardRef(() => EventsGateway))
     private eventsGateway: EventsGateway,
   ) {}
+
+  /**
+   * Récupérer toutes les inscriptions (Admin uniquement)
+   */
+  async getAllInscriptions() {
+    return this.prisma.inscription.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            nom: true,
+            prenom: true,
+            role: true,
+          },
+        },
+        hackathon: {
+          select: {
+            id: true,
+            nom: true,
+            description: true,
+            dateDebut: true,
+            dateFin: true,
+            status: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  /**
+   * Modifier une inscription (Admin uniquement) - Principalement pour changer le statut
+   */
+  async updateInscription(
+    id: string,
+    updateDto: { statut?: string; promo?: string; technologies?: any },
+  ) {
+    const inscription = await this.prisma.inscription.findUnique({
+      where: { id },
+    });
+
+    if (!inscription) {
+      throw new NotFoundException(`Inscription avec l'ID ${id} non trouvée`);
+    }
+
+    return this.prisma.inscription.update({
+      where: { id },
+      data: {
+        ...(updateDto.statut && { statut: updateDto.statut as any }),
+        ...(updateDto.promo !== undefined && { promo: updateDto.promo as any }),
+        ...(updateDto.technologies !== undefined && {
+          technologies: updateDto.technologies,
+        }),
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            nom: true,
+            prenom: true,
+          },
+        },
+        hackathon: {
+          select: {
+            id: true,
+            nom: true,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * Supprimer une inscription (Admin uniquement)
+   */
+  async deleteInscription(id: string) {
+    const inscription = await this.prisma.inscription.findUnique({
+      where: { id },
+    });
+
+    if (!inscription) {
+      throw new NotFoundException(`Inscription avec l'ID ${id} non trouvée`);
+    }
+
+    await this.prisma.inscription.delete({
+      where: { id },
+    });
+
+    return { message: 'Inscription supprimée avec succès' };
+  }
+
+  /**
+   * Récupérer tous les utilisateurs (Admin uniquement)
+   */
+  async getAllUsers() {
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        nom: true,
+        prenom: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            inscriptions: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  /**
+   * Modifier un utilisateur (Admin uniquement)
+   */
+  async updateUser(
+    id: string,
+    updateDto: { nom?: string; prenom?: string; email?: string; role?: string },
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`Utilisateur avec l'ID ${id} non trouvé`);
+    }
+
+    // Vérifier que l'email n'est pas déjà utilisé par un autre utilisateur
+    if (updateDto.email && updateDto.email !== user.email) {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email: updateDto.email },
+      });
+      if (existingUser) {
+        throw new BadRequestException(
+          'Cet email est déjà utilisé par un autre utilisateur',
+        );
+      }
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        ...(updateDto.nom && { nom: updateDto.nom }),
+        ...(updateDto.prenom && { prenom: updateDto.prenom }),
+        ...(updateDto.email && { email: updateDto.email }),
+        ...(updateDto.role && { role: updateDto.role as any }),
+      },
+      select: {
+        id: true,
+        email: true,
+        nom: true,
+        prenom: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  /**
+   * Supprimer un utilisateur (Admin uniquement)
+   */
+  async deleteUser(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`Utilisateur avec l'ID ${id} non trouvé`);
+    }
+
+    // Ne pas permettre de supprimer le dernier admin
+    if (user.role === 'ADMIN') {
+      const adminCount = await this.prisma.user.count({
+        where: { role: 'ADMIN' },
+      });
+      if (adminCount <= 1) {
+        throw new BadRequestException(
+          'Impossible de supprimer le dernier administrateur',
+        );
+      }
+    }
+
+    await this.prisma.user.delete({
+      where: { id },
+    });
+
+    return { message: 'Utilisateur supprimé avec succès' };
+  }
 
   async getDashboard() {
     // Récupérer le hackathon actuel (UPCOMING ou ONGOING)
@@ -57,10 +260,12 @@ export class AdminService {
       parPromoMap.set(promo, (parPromoMap.get(promo) || 0) + 1);
     });
 
-    const parPromo = Array.from(parPromoMap.entries()).map(([promo, count]) => ({
-      promo,
-      count,
-    }));
+    const parPromo = Array.from(parPromoMap.entries()).map(
+      ([promo, count]) => ({
+        promo,
+        count,
+      }),
+    );
 
     // Inscriptions par technologie (technologies est maintenant dans Inscription)
     const inscriptionsAvecTech = await this.prisma.inscription.findMany({
@@ -76,8 +281,8 @@ export class AdminService {
     inscriptionsAvecTech.forEach((inscription) => {
       // technologies est maintenant un Json dans Inscription
       if (inscription.technologies) {
-        const techs = Array.isArray(inscription.technologies) 
-          ? inscription.technologies 
+        const techs = Array.isArray(inscription.technologies)
+          ? inscription.technologies
           : (inscription.technologies as any);
         techs.forEach((tech: string) => {
           parTechnologieMap.set(tech, (parTechnologieMap.get(tech) || 0) + 1);
@@ -206,9 +411,10 @@ export class AdminService {
       },
     });
 
-    const moyenneScore = scores.length > 0
-      ? scores.reduce((acc, log) => acc + (log.score || 0), 0) / scores.length
-      : null;
+    const moyenneScore =
+      scores.length > 0
+        ? scores.reduce((acc, log) => acc + (log.score || 0), 0) / scores.length
+        : null;
 
     return {
       inscriptions: {
@@ -221,10 +427,11 @@ export class AdminService {
       },
       ai: {
         totalAnalyses,
-        averageScore: moyenneScore ? Math.round(moyenneScore * 100) / 100 : null,
+        averageScore: moyenneScore
+          ? Math.round(moyenneScore * 100) / 100
+          : null,
       },
       timestamp: maintenant,
     };
   }
 }
-

@@ -11,7 +11,8 @@ const logger = new Logger('QueueModule');
 })
 export class QueueModule {
   constructor() {
-    logger.log('✅ QueueModule initialisé - Mode SMTP direct (Redis désactivé)');
+    logger.log(
+      '✅ QueueModule initialisé - Mode SMTP direct (Redis désactivé)',
+    );
   }
 }
-

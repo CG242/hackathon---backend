@@ -7,10 +7,14 @@ import { EventsModule } from '../events/events.module';
 import { AnnonceModule } from '../annonce/annonce.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, AnnonceModule, forwardRef(() => EventsModule)],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    AnnonceModule,
+    forwardRef(() => EventsModule),
+  ],
   controllers: [AdminController],
   providers: [AdminService],
   exports: [AdminService],
 })
 export class AdminModule {}
-

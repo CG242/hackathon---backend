@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEnum, IsOptional, IsUUID, MinLength } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsOptional,
+  IsUUID,
+  MinLength,
+} from 'class-validator';
 import { AnnonceCible } from '@prisma/client';
 
 export class CreateAnnonceDto {
@@ -8,7 +14,7 @@ export class CreateAnnonceDto {
   @MinLength(1)
   titre: string;
 
-  @ApiProperty({ example: 'Contenu de l\'annonce...' })
+  @ApiProperty({ example: "Contenu de l'annonce..." })
   @IsString()
   @MinLength(1)
   contenu: string;
@@ -17,9 +23,11 @@ export class CreateAnnonceDto {
   @IsEnum(AnnonceCible)
   cible: AnnonceCible;
 
-  @ApiProperty({ required: false, example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    required: false,
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @IsOptional()
   @IsUUID()
   hackathonId?: string;
 }
-

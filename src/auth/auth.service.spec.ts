@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
-import { UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueueService } from '../queue/queue.service';
@@ -102,7 +106,7 @@ describe('AuthService', () => {
       expect(bcrypt.compare).toHaveBeenCalledWith('password', 'hashedPassword');
     });
 
-    it('devrait retourner null si l\'utilisateur n\'existe pas', async () => {
+    it("devrait retourner null si l'utilisateur n'existe pas", async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
       const result = await service.validateUser('test@example.com', 'password');
@@ -123,7 +127,10 @@ describe('AuthService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      const result = await service.validateUser('test@example.com', 'wrongPassword');
+      const result = await service.validateUser(
+        'test@example.com',
+        'wrongPassword',
+      );
 
       expect(result).toBeNull();
     });
@@ -193,16 +200,19 @@ describe('AuthService', () => {
           hackathonId: 'hackathon-1',
         },
       });
-      expect(mockQueueService.addEmailJob).toHaveBeenCalledWith('accus_reception', {
-        email: 'new@example.com',
-        nom: 'Martin',
-        prenom: 'Pierre',
-      });
+      expect(mockQueueService.addEmailJob).toHaveBeenCalledWith(
+        'accus_reception',
+        {
+          email: 'new@example.com',
+          nom: 'Martin',
+          prenom: 'Pierre',
+        },
+      );
       expect(result.user.password).toBeUndefined();
       expect(result.inscription).toBeDefined();
     });
 
-    it('devrait lever une exception si le hackathon n\'existe pas', async () => {
+    it("devrait lever une exception si le hackathon n'existe pas", async () => {
       const registerDto = {
         email: 'new@example.com',
         password: 'password123',
@@ -213,7 +223,9 @@ describe('AuthService', () => {
 
       mockPrismaService.hackathon.findUnique.mockResolvedValue(null);
 
-      await expect(service.register(registerDto)).rejects.toThrow(NotFoundException);
+      await expect(service.register(registerDto)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('devrait lever une exception si la deadline est dépassée', async () => {
@@ -232,10 +244,12 @@ describe('AuthService', () => {
 
       mockPrismaService.hackathon.findUnique.mockResolvedValue(hackathonExpire);
 
-      await expect(service.register(registerDto)).rejects.toThrow(BadRequestException);
+      await expect(service.register(registerDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
-    it('devrait lever une exception si l\'utilisateur est déjà inscrit', async () => {
+    it("devrait lever une exception si l'utilisateur est déjà inscrit", async () => {
       const registerDto = {
         email: 'existing@example.com',
         password: 'password123',
@@ -259,12 +273,16 @@ describe('AuthService', () => {
 
       mockPrismaService.hackathon.findUnique.mockResolvedValue(mockHackathon);
       mockPrismaService.user.findUnique.mockResolvedValue(existingUser);
-      mockPrismaService.inscription.findUnique.mockResolvedValue(existingInscription);
+      mockPrismaService.inscription.findUnique.mockResolvedValue(
+        existingInscription,
+      );
 
-      await expect(service.register(registerDto)).rejects.toThrow(BadRequestException);
+      await expect(service.register(registerDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
-    it('devrait créer une inscription si l\'utilisateur existe déjà mais n\'est pas inscrit', async () => {
+    it("devrait créer une inscription si l'utilisateur existe déjà mais n'est pas inscrit", async () => {
       const registerDto = {
         email: 'existing@example.com',
         password: 'password123',
@@ -305,4 +323,3 @@ describe('AuthService', () => {
     });
   });
 });
-

@@ -76,7 +76,11 @@ describe('AdminController', () => {
       const result = await controller.getMonitoringLogs(1, 50, undefined);
 
       expect(result).toEqual(mockResult);
-      expect(mockAdminService.getMonitoringLogs).toHaveBeenCalledWith(1, 50, undefined);
+      expect(mockAdminService.getMonitoringLogs).toHaveBeenCalledWith(
+        1,
+        50,
+        undefined,
+      );
     });
 
     it('devrait appeler le service avec le type si fourni', async () => {
@@ -92,10 +96,18 @@ describe('AdminController', () => {
 
       mockAdminService.getMonitoringLogs.mockResolvedValue(mockResult);
 
-      const result = await controller.getMonitoringLogs(1, 50, 'inscription_analysis');
+      const result = await controller.getMonitoringLogs(
+        1,
+        50,
+        'inscription_analysis',
+      );
 
       expect(result).toEqual(mockResult);
-      expect(mockAdminService.getMonitoringLogs).toHaveBeenCalledWith(1, 50, 'inscription_analysis');
+      expect(mockAdminService.getMonitoringLogs).toHaveBeenCalledWith(
+        1,
+        50,
+        'inscription_analysis',
+      );
     });
   });
 
@@ -126,4 +138,3 @@ describe('AdminController', () => {
     });
   });
 });
-

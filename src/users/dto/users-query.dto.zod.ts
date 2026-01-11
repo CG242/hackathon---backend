@@ -8,4 +8,3 @@ export const UsersQueryDtoSchema = z.object({
 });
 
 export type UsersQueryDtoZod = z.infer<typeof UsersQueryDtoSchema>;
-

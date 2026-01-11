@@ -7,4 +7,3 @@ export const HackathonQueryDtoSchema = z.object({
 });
 
 export type HackathonQueryDtoZod = z.infer<typeof HackathonQueryDtoSchema>;
-

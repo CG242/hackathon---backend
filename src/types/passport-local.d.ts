@@ -6,4 +6,3 @@ declare module 'passport-local' {
     name: string;
   }
 }
-

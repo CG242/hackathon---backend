@@ -106,7 +106,7 @@ describe('Annonce E2E', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           titre: 'Annonce publique test',
-          contenu: 'Contenu de l\'annonce',
+          contenu: "Contenu de l'annonce",
           cible: AnnonceCible.PUBLIC,
           hackathonId,
         });
@@ -132,7 +132,7 @@ describe('Annonce E2E', () => {
       expect(response.body.cible).toBe(AnnonceCible.INSCRITS);
     });
 
-    it('devrait refuser l\'accès sans token admin', async () => {
+    it("devrait refuser l'accès sans token admin", async () => {
       const response = await request(app.getHttpServer())
         .post('/admin/annonces')
         .send({
@@ -147,8 +147,9 @@ describe('Annonce E2E', () => {
 
   describe('GET /annonces/public', () => {
     it('devrait retourner les annonces publiques', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/annonces/public');
+      const response = await request(app.getHttpServer()).get(
+        '/annonces/public',
+      );
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
@@ -157,4 +158,3 @@ describe('Annonce E2E', () => {
     });
   });
 });
-

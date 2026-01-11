@@ -1,4 +1,11 @@
-import { Injectable, UnauthorizedException, BadRequestException, NotFoundException, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  NotFoundException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -50,13 +57,17 @@ export class AuthService {
     });
 
     if (!hackathon) {
-      throw new NotFoundException(`Hackathon avec l'ID ${registerDto.hackathonId} non trouvé`);
+      throw new NotFoundException(
+        `Hackathon avec l'ID ${registerDto.hackathonId} non trouvé`,
+      );
     }
 
     // Vérifier la deadline d'inscription
     const maintenant = new Date();
     if (new Date(hackathon.dateLimiteInscription) < maintenant) {
-      throw new BadRequestException('La date limite d\'inscription est dépassée');
+      throw new BadRequestException(
+        "La date limite d'inscription est dépassée",
+      );
     }
 
     // Vérifier que le hackathon est encore ouvert aux inscriptions
@@ -89,7 +100,7 @@ export class AuthService {
     } else {
       // Créer le nouvel utilisateur (sans promo/technologies - elles sont dans Inscription)
       const hashedPassword = await bcrypt.hash(registerDto.password, 10);
-      
+
       user = await this.prisma.user.create({
         data: {
           email: registerDto.email,
@@ -107,8 +118,10 @@ export class AuthService {
         userId: user.id,
         hackathonId: registerDto.hackathonId,
         promo: registerDto.promo as any, // Peut être L1, L2 ou null
-        technologies: registerDto.technologies ? registerDto.technologies : undefined, // JSONB
-        statut: 'EN_ATTENTE', // Par défaut EN_ATTENTE selon le schéma
+        technologies: registerDto.technologies
+          ? registerDto.technologies
+          : undefined, // JSONB
+        statut: 'VALIDE', // Statut VALIDE par défaut - inscription automatiquement acceptée
       },
     });
 
@@ -117,6 +130,7 @@ export class AuthService {
       email: user.email,
       nom: user.nom,
       prenom: user.prenom,
+      hackathonId: registerDto.hackathonId,
     });
 
     // Émettre l'événement temps réel de nouvelle inscription
@@ -200,7 +214,10 @@ export class AuthService {
     }
 
     // Vérifier le mot de passe actuel
-    const isPasswordValid = await bcrypt.compare(changePasswordDto.currentPassword, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      changePasswordDto.currentPassword,
+      user.password,
+    );
     if (!isPasswordValid) {
       throw new BadRequestException('Mot de passe actuel incorrect');
     }
@@ -217,4 +234,3 @@ export class AuthService {
     return { message: 'Mot de passe changé avec succès' };
   }
 }
-

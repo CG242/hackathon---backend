@@ -102,12 +102,12 @@ describe('AiService', () => {
       expect(result.metadata.reasons.length).toBeGreaterThan(0);
     });
 
-    it('devrait lever une exception si l\'utilisateur n\'existe pas', async () => {
+    it("devrait lever une exception si l'utilisateur n'existe pas", async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.analyzeInscription('user-inexistant')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.analyzeInscription('user-inexistant'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('devrait générer des suggestions appropriées', async () => {
@@ -127,7 +127,9 @@ describe('AiService', () => {
       const result = await service.analyzeInscription('user-1');
 
       expect(result.suggestions.length).toBeGreaterThan(0);
-      expect(result.suggestions.some((s) => s.includes('technologies'))).toBe(true);
+      expect(result.suggestions.some((s) => s.includes('technologies'))).toBe(
+        true,
+      );
       expect(result.suggestions.some((s) => s.includes('promo'))).toBe(true);
     });
   });
@@ -178,4 +180,3 @@ describe('AiService', () => {
     });
   });
 });
-

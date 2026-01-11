@@ -5,5 +5,3 @@ export const RefreshTokenDtoSchema = z.object({
 });
 
 export type RefreshTokenDtoZod = z.infer<typeof RefreshTokenDtoSchema>;
-
-

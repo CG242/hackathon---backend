@@ -8,4 +8,3 @@ export const UpdateProfileDtoSchema = z.object({
 });
 
 export type UpdateProfileDtoZod = z.infer<typeof UpdateProfileDtoSchema>;
-

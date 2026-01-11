@@ -52,10 +52,10 @@ describe('AnnonceService', () => {
   });
 
   describe('create', () => {
-    it('devrait créer une annonce publique sans envoyer d\'emails', async () => {
+    it("devrait créer une annonce publique sans envoyer d'emails", async () => {
       const createDto = {
         titre: 'Annonce publique',
-        contenu: 'Contenu de l\'annonce',
+        contenu: "Contenu de l'annonce",
         cible: AnnonceCible.PUBLIC,
       };
 
@@ -79,7 +79,7 @@ describe('AnnonceService', () => {
     it('devrait créer une annonce pour inscrits et envoyer des emails en batch', async () => {
       const createDto = {
         titre: 'Annonce pour inscrits',
-        contenu: 'Contenu de l\'annonce',
+        contenu: "Contenu de l'annonce",
         cible: AnnonceCible.INSCRITS,
         hackathonId: 'hackathon-1',
       };
@@ -117,7 +117,9 @@ describe('AnnonceService', () => {
 
       mockPrismaService.hackathon.findUnique.mockResolvedValue(mockHackathon);
       mockPrismaService.annonce.create.mockResolvedValue(mockAnnonce);
-      mockPrismaService.inscription.findMany.mockResolvedValue(mockInscriptions);
+      mockPrismaService.inscription.findMany.mockResolvedValue(
+        mockInscriptions,
+      );
       mockQueueService.addEmailJob.mockResolvedValue({});
 
       const result = await service.create(createDto);
@@ -142,7 +144,7 @@ describe('AnnonceService', () => {
       expect(mockQueueService.addEmailJob).toHaveBeenCalledTimes(2);
     });
 
-    it('devrait lever une exception si le hackathon n\'existe pas', async () => {
+    it("devrait lever une exception si le hackathon n'existe pas", async () => {
       const createDto = {
         titre: 'Annonce',
         contenu: 'Contenu',
@@ -152,7 +154,9 @@ describe('AnnonceService', () => {
 
       mockPrismaService.hackathon.findUnique.mockResolvedValue(null);
 
-      await expect(service.create(createDto)).rejects.toThrow(NotFoundException);
+      await expect(service.create(createDto)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -208,4 +212,3 @@ describe('AnnonceService', () => {
     });
   });
 });
-

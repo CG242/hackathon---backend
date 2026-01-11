@@ -8,4 +8,3 @@ export const AiLogsQueryDtoSchema = z.object({
 });
 
 export type AiLogsQueryDtoZod = z.infer<typeof AiLogsQueryDtoSchema>;
-

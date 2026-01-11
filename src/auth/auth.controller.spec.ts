@@ -56,7 +56,7 @@ describe('AuthController', () => {
   });
 
   describe('login', () => {
-    it('devrait appeler authService.login avec l\'utilisateur de la requête', async () => {
+    it("devrait appeler authService.login avec l'utilisateur de la requête", async () => {
       const mockUser = {
         id: '1',
         email: 'test@example.com',
@@ -83,4 +83,3 @@ describe('AuthController', () => {
     });
   });
 });
-

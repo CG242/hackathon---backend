@@ -28,6 +28,7 @@ export class QueueService {
             data.email,
             data.nom,
             data.prenom,
+            data.hackathonId,
           );
         case 'annonce_inscrits':
           return await this.emailService.sendAnnonceInscrits(
@@ -42,7 +43,9 @@ export class QueueService {
           return null;
       }
     } catch (error: any) {
-      this.logger.error(`Erreur lors de l'envoi de l'email (${type}): ${error?.message || String(error)}`);
+      this.logger.error(
+        `Erreur lors de l'envoi de l'email (${type}): ${error?.message || String(error)}`,
+      );
       return null;
     }
   }

@@ -1,5 +1,21 @@
-import { Controller, Post, Get, Put, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Get,
+  Put,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
 import { AnnonceService } from './annonce.service';
 import { CreateAnnonceDtoSchema } from './dto/create-annonce.dto.zod';
 import { UpdateAnnonceDtoSchema } from './dto/update-annonce.dto.zod';
@@ -24,17 +40,31 @@ export class AnnonceController {
   @Get('inscrits')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Récupérer les annonces pour les utilisateurs inscrits' })
+  @ApiOperation({
+    summary: 'Récupérer les annonces pour les utilisateurs inscrits',
+  })
   @ApiResponse({ status: 200, description: 'Liste des annonces pour inscrits' })
   @ApiResponse({ status: 401, description: 'Non autorisé' })
   async getAnnoncesInscrits(@Request() req) {
     return this.annonceService.getAnnoncesInscrits(req.user.id);
   }
 
+  @Get('admin/all')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Récupérer toutes les annonces (Admin uniquement)' })
+  @ApiResponse({ status: 200, description: 'Liste de toutes les annonces' })
+  @ApiResponse({ status: 401, description: 'Non autorisé' })
+  @ApiResponse({ status: 403, description: 'Accès refusé - Admin uniquement' })
+  async getAllAnnonces() {
+    return this.annonceService.getAllAnnonces();
+  }
+
   @Get(':id')
-  @ApiParam({ name: 'id', description: 'ID de l\'annonce' })
-  @ApiOperation({ summary: 'Récupérer les détails d\'une annonce' })
-  @ApiResponse({ status: 200, description: 'Détails de l\'annonce' })
+  @ApiParam({ name: 'id', description: "ID de l'annonce" })
+  @ApiOperation({ summary: "Récupérer les détails d'une annonce" })
+  @ApiResponse({ status: 200, description: "Détails de l'annonce" })
   @ApiResponse({ status: 404, description: 'Annonce non trouvée' })
   async getAnnonceById(@Param('id') id: string) {
     return this.annonceService.getAnnonceById(id);
@@ -51,8 +81,9 @@ export class AnnonceController {
   @ApiResponse({ status: 401, description: 'Non autorisé' })
   @ApiResponse({ status: 403, description: 'Accès refusé - Admin uniquement' })
   @ApiResponse({ status: 404, description: 'Hackathon non trouvé' })
-  async create(@Body() createAnnonceDto: any) {
-    return this.annonceService.create(createAnnonceDto);
+  async create(@Body() createAnnonceDto: any, @Request() req: any) {
+    const userId = req.user?.id;
+    return this.annonceService.create(createAnnonceDto, userId);
   }
 
   @Put('admin/annonces/:id')
@@ -60,7 +91,7 @@ export class AnnonceController {
   @Roles(Role.ADMIN)
   @ZodValidation(UpdateAnnonceDtoSchema)
   @ApiBearerAuth()
-  @ApiParam({ name: 'id', description: 'ID de l\'annonce' })
+  @ApiParam({ name: 'id', description: "ID de l'annonce" })
   @ApiOperation({ summary: 'Modifier une annonce (Admin uniquement)' })
   @ApiResponse({ status: 200, description: 'Annonce modifiée avec succès' })
   @ApiResponse({ status: 404, description: 'Annonce non trouvée' })
@@ -72,7 +103,7 @@ export class AnnonceController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
-  @ApiParam({ name: 'id', description: 'ID de l\'annonce' })
+  @ApiParam({ name: 'id', description: "ID de l'annonce" })
   @ApiOperation({ summary: 'Supprimer une annonce (Admin uniquement)' })
   @ApiResponse({ status: 200, description: 'Annonce supprimée avec succès' })
   @ApiResponse({ status: 404, description: 'Annonce non trouvée' })
@@ -80,4 +111,3 @@ export class AnnonceController {
     return this.annonceService.deleteAnnonce(id);
   }
 }
-

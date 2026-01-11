@@ -9,6 +9,7 @@ datasource db {
   provider = "postgresql"
 }
 
+// Enumérations
 enum Role {
   USER
   ADMIN
@@ -25,57 +26,62 @@ enum AnnonceCible {
   INSCRITS
 }
 
+enum Promo {
+  L1
+  L2
+  L3
+  M1
+  M2
+}
+
+enum StatutInscription {
+  EN_ATTENTE
+  VALIDE
+  REFUSE
+}
+
+enum TypeIALog {
+  ANALYSE
+  SUGGESTION
+  SURVEILLANCE
+}
+
 enum TypeEvenementSurveillance {
   INSCRIPTION
   CONNEXION
-  ACTION_ADMIN
-  ERREUR
-  PERFORMANCE
+  ACTIVITE
 }
 
 enum NiveauEvenementSurveillance {
   INFO
   WARNING
   ERROR
-  CRITICAL
-}
-
-enum Promo {
-  L1
-  L2
-}
-
-enum StatutInscription {
-  VALIDE
-  EN_ATTENTE
-  REFUSE
 }
 
 enum TypeNotification {
   EMAIL
   SITE
+  SMS
 }
 
-enum TypeIALog {
-  ANALYSE
-  SURVEILLANCE
-  SUGGESTION
-}
-
+// Modèles principaux
 model User {
-  id                     String                  @id @default(uuid())
-  email                  String                  @unique
-  password               String
-  nom                    String
-  prenom                 String
-  role                   Role                    @default(USER)
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
-  inscriptions           Inscription[]
-  iaLogs                 IALog[]
-  evenementsSurveillance EvenementSurveillance[]
-  notifications          Notification[]
-  teams                  TeamMember[]
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  nom       String
+  prenom    String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  inscriptions    Inscription[]
+  annonces        Annonce[]
+  iaLogs          IALog[]
+  evenements      EvenementSurveillance[]
+  notifications   Notification[]
+  teamMembers     TeamMember[]
 
   @@index([email])
   @@index([role])
@@ -83,20 +89,24 @@ model User {
 }
 
 model Hackathon {
-  id                    String             @id @default(uuid())
+  id                    String          @id @default(uuid())
   nom                   String
-  description           String
-  themes                Json? // JSONB pour matching IA
+  description           String?
+  themes                String[]        @default([])
   dateDebut             DateTime
   dateFin               DateTime
   dateLimiteInscription DateTime
-  status                HackathonStatus    @default(UPCOMING)
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
-  inscriptions          Inscription[]
-  annonces              Annonce[]
-  resultat              ResultatHackathon?
-  teams                 Team[]
+  status                HackathonStatus @default(UPCOMING)
+  registrationGoal      Int?            @default(300)
+  currentRegistrations  Int?            @default(0)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  // Relations
+  inscriptions    Inscription[]
+  annonces        Annonce[]
+  teams           Team[]
+  resultats       Resultats?
 
   @@index([status, dateDebut])
   @@index([dateLimiteInscription])
@@ -107,13 +117,16 @@ model Inscription {
   id           String            @id @default(uuid())
   userId       String
   hackathonId  String
-  promo        Promo? // ENUM('L1','L2')
-  technologies Json? // JSONB pour technologies spécifiques à cette inscription
+  promo        Promo?
+  technologies String[]          @default([])
   statut       StatutInscription @default(EN_ATTENTE)
   createdAt    DateTime          @default(now())
-  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  hackathon    Hackathon         @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
-  analysesIA   AnalyseIA[]
+  updatedAt    DateTime          @updatedAt
+
+  // Relations
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hackathon  Hackathon   @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  analysesIA AnalyseIA[]
 
   @@unique([userId, hackathonId])
   @@index([hackathonId])
@@ -123,15 +136,19 @@ model Inscription {
 }
 
 model Annonce {
-  id            String         @id @default(uuid())
-  titre         String
-  contenu       String
-  cible         AnnonceCible
-  sentAt        DateTime? // Timestamp d'envoi (pour traçabilité)
-  hackathonId   String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  hackathon     Hackathon?     @relation(fields: [hackathonId], references: [id], onDelete: SetNull)
+  id          String        @id @default(uuid())
+  titre       String
+  contenu     String
+  cible       AnnonceCible  @default(PUBLIC)
+  hackathonId String?
+  sentAt      DateTime?     @default(now())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  hackathon    Hackathon?    @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
   notifications Notification[]
 
   @@index([hackathonId])
@@ -141,16 +158,18 @@ model Annonce {
 }
 
 model IALog {
-  id          String    @id @default(uuid())
-  userId      String?
-  type        TypeIALog // ENUM('ANALYSE','SURVEILLANCE','SUGGESTION')
-  input       Json? // JSONB - données d'entrée de l'IA
-  output      Json? // JSONB - données de sortie de l'IA
-  score       Float?
-  suggestions String[]
-  metadata    Json? // Métadonnées supplémentaires (pour compatibilité)
-  createdAt   DateTime  @default(now())
-  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(uuid())
+  userId       String
+  type         TypeIALog
+  input        Json
+  output       Json
+  score        Float?
+  suggestions  String[] @default([])
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([createdAt])
@@ -159,16 +178,18 @@ model IALog {
 }
 
 model EvenementSurveillance {
-  id        String                      @id @default(uuid())
-  type      TypeEvenementSurveillance
-  valeur    Float? // Valeur mesurée (ex: inscriptions_per_hour = 50)
-  seuil     Float? // Seuil de déclenchement (ex: seuil = 100)
-  niveau    NiveauEvenementSurveillance @default(INFO)
-  message   String
-  details   Json?
-  userId    String?
-  createdAt DateTime                    @default(now())
-  user      User?                       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id          String                    @id @default(uuid())
+  type        TypeEvenementSurveillance
+  valeur      Float
+  seuil       Float
+  niveau      NiveauEvenementSurveillance
+  message     String
+  details     Json?
+  userId      String?
+  createdAt   DateTime                  @default(now())
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([type])
   @@index([niveau])
@@ -178,19 +199,20 @@ model EvenementSurveillance {
   @@index([valeur, seuil])
 }
 
-// Nouveau modèle : Notification (système de notifications planifiées)
 model Notification {
-  id          String           @id @default(uuid())
-  type        TypeNotification // EMAIL ou SITE
-  message     String
-  scheduledAt DateTime? // Date de programmation (pour J-7, J-3, J-1)
-  sent        Boolean          @default(false)
-  sentAt      DateTime? // Timestamp d'envoi effectif
-  userId      String
-  annonceId   String?
-  createdAt   DateTime         @default(now())
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  annonce     Annonce?         @relation(fields: [annonceId], references: [id], onDelete: SetNull)
+  id           String         @id @default(uuid())
+  type         TypeNotification
+  message      String
+  scheduledAt  DateTime?
+  sent         Boolean        @default(false)
+  sentAt       DateTime?
+  createdAt    DateTime       @default(now())
+
+  // Relations
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  annonce  Annonce? @relation(fields: [annonceId], references: [id], onDelete: Cascade)
+  annonceId String?
 
   @@index([userId])
   @@index([annonceId])
@@ -199,16 +221,18 @@ model Notification {
   @@index([type, sent])
 }
 
-// Nouveau modèle : AnalyseIA (résultat métier de l'analyse IA)
 model AnalyseIA {
-  id                 String      @id @default(uuid())
-  inscriptionId      String      @unique
-  scoreMatching      Float? // Score de matching (0-100)
-  scoreSpam          Float? // Score de spam (0-100)
-  suggestionsEquipes Json? // JSONB - suggestions de formation d'équipes
-  autoTags           Json? // JSONB - tags automatiques générés par l'IA
-  createdAt          DateTime    @default(now())
-  inscription        Inscription @relation(fields: [inscriptionId], references: [id], onDelete: Cascade)
+  id            String   @id @default(uuid())
+  inscriptionId String   @unique
+  scoreMatching Float    @default(0)
+  scoreSpam     Float    @default(0)
+  suggestionsEquipes Json?
+  autoTags      String[] @default([])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  inscription Inscription @relation(fields: [inscriptionId], references: [id], onDelete: Cascade)
 
   @@index([inscriptionId])
   @@index([scoreMatching])
@@ -216,154 +240,55 @@ model AnalyseIA {
   @@index([createdAt])
 }
 
-// Modèle pour stocker les résultats du hackathon
-model ResultatHackathon {
-  id                           String    @id @default(uuid())
-  hackathonId                  String    @unique
-  premierPlace                 String? // Nom du projet gagnant (1ère place)
-  deuxiemePlace                String? // Nom du projet gagnant (2ème place)
-  troisiemePlace               String? // Nom du projet gagnant (3ème place)
-  preselectionnes              Json? // JSONB - Liste des emails des présélectionnés
-  podiumPublie                 Boolean   @default(false)
-  preselectionsPubliees        Boolean   @default(false)
-  documentPreselectionsPath    String? // Chemin du fichier PDF des présélections
-  documentPreselectionsName    String? // Nom original du fichier PDF
-  documentPreselectionsUploadedAt DateTime? // Date d'upload du document
-  createdAt                    DateTime  @default(now())
-  updatedAt                    DateTime  @updatedAt
-  hackathon                    Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+model Resultats {
+  id                      String   @id @default(uuid())
+  hackathonId             String   @unique
+  premierPlace            String?
+  deuxiemePlace           String?
+  troisiemePlace          String?
+  podiumPublie            Boolean  @default(false)
+  preselectionnes         String[] @default([])
+  preselectionsPubliees   Boolean  @default(false)
+  documentPreselectionsName String?
+  documentPreselectionsUploadedAt DateTime?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  // Relations
+  hackathon Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
 
   @@index([hackathonId])
   @@index([podiumPublie])
   @@index([preselectionsPubliees])
 }
 
-// Modèle pour les équipes
 model Team {
   id          String       @id @default(uuid())
-  nom         String // Nom de l'équipe
-  description String? // Description optionnelle
-  hackathonId String // Hackathon auquel l'équipe appartient
-  projetNom   String? // Nom du projet associé (peut être utilisé pour les résultats)
+  nom         String
+  description String?
+  hackathonId String
+  projetNom   String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  hackathon   Hackathon    @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
-  members     TeamMember[]
+
+  // Relations
+  hackathon Hackathon   @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  members   TeamMember[]
 
   @@index([hackathonId])
   @@index([projetNom])
 }
 
-// Table de jointure pour la relation many-to-many entre User et Team
 model TeamMember {
   id        String   @id @default(uuid())
   teamId    String
   userId    String
-  role      String? // Rôle dans l'équipe (ex: "Chef de projet", "Développeur", etc.)
+  role      String?
   createdAt DateTime @default(now())
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([teamId, userId])
-  @@index([teamId])
-  @@index([userId])
-}
-
-
-// Modèle pour les équipes
-model Team {
-  id          String       @id @default(uuid())
-  nom         String // Nom de l'équipe
-  description String? // Description optionnelle
-  hackathonId String // Hackathon auquel l'équipe appartient
-  projetNom   String? // Nom du projet associé (peut être utilisé pour les résultats)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  hackathon   Hackathon    @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
-  members     TeamMember[]
-
-  @@index([hackathonId])
-  @@index([projetNom])
-}
-
-// Table de jointure pour la relation many-to-many entre User et Team
-model TeamMember {
-  id        String   @id @default(uuid())
-  teamId    String
-  userId    String
-  role      String? // Rôle dans l'équipe (ex: "Chef de projet", "Développeur", etc.)
-  createdAt DateTime @default(now())
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([teamId, userId])
-  @@index([teamId])
-  @@index([userId])
-}
-
-  @@index([hackathonId])
-}
-
-// Modèle pour les équipes
-model Team {
-  id          String       @id @default(uuid())
-  nom         String // Nom de l'équipe
-  description String? // Description optionnelle
-  hackathonId String // Hackathon auquel l'équipe appartient
-  projetNom   String? // Nom du projet associé (peut être utilisé pour les résultats)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  hackathon   Hackathon    @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
-  members     TeamMember[]
-
-  @@index([hackathonId])
-  @@index([projetNom])
-}
-
-// Table de jointure pour la relation many-to-many entre User et Team
-model TeamMember {
-  id        String   @id @default(uuid())
-  teamId    String
-  userId    String
-  role      String? // Rôle dans l'équipe (ex: "Chef de projet", "Développeur", etc.)
-  createdAt DateTime @default(now())
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([teamId, userId])
-  @@index([teamId])
-  @@index([userId])
-}
-
-  @@index([podiumPublie])
-  @@index([preselectionsPubliees])
-}
-
-// Modèle pour les équipes
-model Team {
-  id          String       @id @default(uuid())
-  nom         String // Nom de l'équipe
-  description String? // Description optionnelle
-  hackathonId String // Hackathon auquel l'équipe appartient
-  projetNom   String? // Nom du projet associé (peut être utilisé pour les résultats)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  hackathon   Hackathon    @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
-  members     TeamMember[]
-
-  @@index([hackathonId])
-  @@index([projetNom])
-}
-
-// Table de jointure pour la relation many-to-many entre User et Team
-model TeamMember {
-  id        String   @id @default(uuid())
-  teamId    String
-  userId    String
-  role      String? // Rôle dans l'équipe (ex: "Chef de projet", "Développeur", etc.)
-  createdAt DateTime @default(now())
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Relations
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, userId])
   @@index([teamId])

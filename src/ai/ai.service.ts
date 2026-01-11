@@ -83,20 +83,20 @@ export class AiService {
     // Vérifier le nombre d'inscriptions
     if (user.inscriptions.length > 5) {
       score -= 15;
-      reasons.push('Nombre élevé d\'inscriptions');
+      reasons.push("Nombre élevé d'inscriptions");
     }
 
     // Vérifier les technologies (maintenant dans Inscription, pas User)
     const latestInscription = user.inscriptions[user.inscriptions.length - 1];
-    const technologies = latestInscription?.technologies 
-      ? (Array.isArray(latestInscription.technologies) 
-          ? latestInscription.technologies 
-          : [])
+    const technologies = latestInscription?.technologies
+      ? Array.isArray(latestInscription.technologies)
+        ? latestInscription.technologies
+        : []
       : [];
 
     if (technologies.length === 0) {
       score -= 10;
-      reasons.push('Aucune technologie renseignée dans l\'inscription');
+      reasons.push("Aucune technologie renseignée dans l'inscription");
     }
 
     // Vérifier la promo (maintenant dans Inscription, pas User)
@@ -104,24 +104,30 @@ export class AiService {
 
     if (!promo) {
       score -= 5;
-      reasons.push('Promo non renseignée dans l\'inscription');
+      reasons.push("Promo non renseignée dans l'inscription");
     }
 
     // Générer des suggestions
     const suggestions: string[] = [];
-    
+
     if (technologies.length === 0) {
-      suggestions.push('Ajoutez vos technologies préférées dans votre inscription pour améliorer votre profil');
+      suggestions.push(
+        'Ajoutez vos technologies préférées dans votre inscription pour améliorer votre profil',
+      );
     }
-    
+
     if (!promo) {
-      suggestions.push('Renseignez votre promo dans votre inscription pour une meilleure visibilité');
+      suggestions.push(
+        'Renseignez votre promo dans votre inscription pour une meilleure visibilité',
+      );
     }
 
     if (user.inscriptions.length === 0) {
-      suggestions.push('Vous n\'êtes inscrit à aucun hackathon actuellement');
+      suggestions.push("Vous n'êtes inscrit à aucun hackathon actuellement");
     } else if (user.inscriptions.length === 1) {
-      suggestions.push('Pensez à vous inscrire à d\'autres hackathons pour plus d\'opportunités');
+      suggestions.push(
+        "Pensez à vous inscrire à d'autres hackathons pour plus d'opportunités",
+      );
     }
 
     if (score < 50) {
@@ -190,4 +196,3 @@ export class AiService {
     };
   }
 }
-

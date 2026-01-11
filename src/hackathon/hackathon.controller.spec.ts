@@ -69,10 +69,14 @@ describe('HackathonController', () => {
       const result = await controller.getPastHackathons(1, 10, undefined);
 
       expect(result).toEqual(mockResult);
-      expect(mockHackathonService.getPastHackathons).toHaveBeenCalledWith(1, 10, undefined);
+      expect(mockHackathonService.getPastHackathons).toHaveBeenCalledWith(
+        1,
+        10,
+        undefined,
+      );
     });
 
-    it('devrait appeler le service avec l\'année si fournie', async () => {
+    it("devrait appeler le service avec l'année si fournie", async () => {
       const mockResult = {
         data: [],
         meta: {
@@ -88,8 +92,11 @@ describe('HackathonController', () => {
       const result = await controller.getPastHackathons(1, 10, '2023');
 
       expect(result).toEqual(mockResult);
-      expect(mockHackathonService.getPastHackathons).toHaveBeenCalledWith(1, 10, 2023);
+      expect(mockHackathonService.getPastHackathons).toHaveBeenCalledWith(
+        1,
+        10,
+        2023,
+      );
     });
   });
 });
-

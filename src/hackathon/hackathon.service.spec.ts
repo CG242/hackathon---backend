@@ -68,7 +68,7 @@ describe('HackathonService', () => {
       });
     });
 
-    it('devrait lever une exception si aucun hackathon public n\'est trouvé', async () => {
+    it("devrait lever une exception si aucun hackathon public n'est trouvé", async () => {
       mockPrismaService.hackathon.findFirst.mockResolvedValue(null);
 
       await expect(service.getPublicHackathon()).rejects.toThrow(
@@ -147,11 +147,10 @@ describe('HackathonService', () => {
       });
     });
 
-    it('devrait lever une exception si le hackathon n\'existe pas', async () => {
+    it("devrait lever une exception si le hackathon n'existe pas", async () => {
       mockPrismaService.hackathon.findUnique.mockResolvedValue(null);
 
       await expect(service.findById('999')).rejects.toThrow(NotFoundException);
     });
   });
 });
-

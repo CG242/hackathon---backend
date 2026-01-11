@@ -11,7 +11,7 @@ export class AnnonceService {
     private queueService: QueueService,
   ) {}
 
-  async create(createAnnonceDto: CreateAnnonceDto) {
+  async create(createAnnonceDto: CreateAnnonceDto, userId: string) {
     // Vérifier que le hackathon existe si hackathonId est fourni
     if (createAnnonceDto.hackathonId) {
       const hackathon = await this.prisma.hackathon.findUnique({
@@ -25,13 +25,14 @@ export class AnnonceService {
       }
     }
 
-    // Créer l'annonce
+    // Créer l'annonce en utilisant unchecked pour permettre les champs optionnels
     const annonce = await this.prisma.annonce.create({
       data: {
         titre: createAnnonceDto.titre,
         contenu: createAnnonceDto.contenu,
         cible: createAnnonceDto.cible,
-        hackathonId: createAnnonceDto.hackathonId,
+        userId: userId,
+        hackathonId: createAnnonceDto.hackathonId || null,
       },
     });
 
@@ -64,10 +65,28 @@ export class AnnonceService {
     return annonces;
   }
 
+  async getAllAnnonces() {
+    const annonces = await this.prisma.annonce.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        hackathon: {
+          select: {
+            id: true,
+            nom: true,
+          },
+        },
+      },
+    });
+
+    return annonces;
+  }
+
   private async sendBatchEmails(annonce: any) {
     // Récupérer tous les utilisateurs inscrits
     let inscriptions;
-    
+
     if (annonce.hackathonId) {
       // Si l'annonce est liée à un hackathon spécifique, envoyer uniquement aux inscrits de ce hackathon
       inscriptions = await this.prisma.inscription.findMany({
@@ -179,7 +198,9 @@ export class AnnonceService {
       });
 
       if (!hackathon) {
-        throw new NotFoundException(`Hackathon avec l'ID ${updateDto.hackathonId} non trouvé`);
+        throw new NotFoundException(
+          `Hackathon avec l'ID ${updateDto.hackathonId} non trouvé`,
+        );
       }
     }
 
@@ -189,7 +210,9 @@ export class AnnonceService {
         ...(updateDto.titre && { titre: updateDto.titre }),
         ...(updateDto.contenu && { contenu: updateDto.contenu }),
         ...(updateDto.cible && { cible: updateDto.cible }),
-        ...(updateDto.hackathonId !== undefined && { hackathonId: updateDto.hackathonId }),
+        ...(updateDto.hackathonId !== undefined && {
+          hackathonId: updateDto.hackathonId,
+        }),
       },
       include: {
         hackathon: {
@@ -212,4 +235,3 @@ export class AnnonceService {
     return { message: 'Annonce supprimée avec succès' };
   }
 }
-

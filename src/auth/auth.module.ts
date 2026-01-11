@@ -25,4 +25,3 @@ import { EventsModule } from '../events/events.module';
   exports: [AuthService],
 })
 export class AuthModule {}
-

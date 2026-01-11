@@ -106,9 +106,18 @@ describe('AdminService', () => {
       expect(result).toHaveProperty('parTechnologie');
       expect(result.parPromo).toContainEqual({ promo: '2024', count: 2 });
       expect(result.parPromo).toContainEqual({ promo: '2023', count: 1 });
-      expect(result.parPromo).toContainEqual({ promo: 'Non renseignée', count: 1 });
-      expect(result.parTechnologie).toContainEqual({ technologie: 'React', count: 2 });
-      expect(result.parTechnologie).toContainEqual({ technologie: 'Node.js', count: 1 });
+      expect(result.parPromo).toContainEqual({
+        promo: 'Non renseignée',
+        count: 1,
+      });
+      expect(result.parTechnologie).toContainEqual({
+        technologie: 'React',
+        count: 2,
+      });
+      expect(result.parTechnologie).toContainEqual({
+        technologie: 'Node.js',
+        count: 1,
+      });
     });
 
     it('devrait retourner un message si aucun hackathon actif', async () => {
@@ -200,4 +209,3 @@ describe('AdminService', () => {
     });
   });
 });
-

@@ -6,4 +6,3 @@ export const LoginDtoSchema = z.object({
 });
 
 export type LoginDtoZod = z.infer<typeof LoginDtoSchema>;
-

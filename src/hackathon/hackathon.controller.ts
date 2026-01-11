@@ -1,5 +1,22 @@
-import { Controller, Get, Query, Post, Put, Delete, Param, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Query,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
 import { HackathonService } from './hackathon.service';
 import { HackathonQueryDtoSchema } from './dto/hackathon-query.dto.zod';
 import { CreateHackathonDtoSchema } from './dto/create-hackathon.dto.zod';
@@ -16,27 +33,69 @@ export class HackathonController {
   constructor(private hackathonService: HackathonService) {}
 
   @Get('public')
-  @ApiOperation({ summary: 'Récupérer les informations du hackathon public actuel' })
-  @ApiResponse({ status: 200, description: 'Informations du hackathon avec compte à rebours' })
+  @ApiOperation({
+    summary: 'Récupérer les informations du hackathon public actuel',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Informations du hackathon avec compte à rebours',
+  })
   @ApiResponse({ status: 404, description: 'Aucun hackathon à venir trouvé' })
   async getPublicHackathon() {
     return this.hackathonService.getPublicHackathon();
   }
 
+  @Get('available')
+  @ApiOperation({
+    summary: 'Récupérer tous les hackathons disponibles pour inscription',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Liste des hackathons disponibles (UPCOMING ou ONGOING) avec date limite non dépassée',
+  })
+  async getAvailableHackathons() {
+    return this.hackathonService.getAvailableHackathons();
+  }
+
   @Get('past')
   @ZodValidation(HackathonQueryDtoSchema)
-  @ApiOperation({ summary: 'Récupérer la liste des hackathons passés avec pagination' })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Numéro de page (défaut: 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Nombre d\'éléments par page (défaut: 10)' })
-  @ApiQuery({ name: 'year', required: false, type: Number, description: 'Filtrer par année' })
-  @ApiResponse({ status: 200, description: 'Liste des hackathons passés avec métadonnées de pagination' })
+  @ApiOperation({
+    summary: 'Récupérer la liste des hackathons passés avec pagination',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Numéro de page (défaut: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: "Nombre d'éléments par page (défaut: 10)",
+  })
+  @ApiQuery({
+    name: 'year',
+    required: false,
+    type: Number,
+    description: 'Filtrer par année',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Liste des hackathons passés avec métadonnées de pagination',
+  })
   async getPastHackathons(@Query() query: any) {
-    return this.hackathonService.getPastHackathons(query.page || 1, query.limit || 10, query.year);
+    return this.hackathonService.getPastHackathons(
+      query.page || 1,
+      query.limit || 10,
+      query.year,
+    );
   }
 
   @Get(':id')
   @ApiParam({ name: 'id', description: 'ID du hackathon' })
-  @ApiOperation({ summary: 'Récupérer les détails d\'un hackathon' })
+  @ApiOperation({ summary: "Récupérer les détails d'un hackathon" })
   @ApiResponse({ status: 200, description: 'Détails du hackathon' })
   @ApiResponse({ status: 404, description: 'Hackathon non trouvé' })
   async getHackathonById(@Param('id') id: string) {
@@ -82,4 +141,3 @@ export class HackathonController {
     return this.hackathonService.deleteHackathon(id);
   }
 }
-

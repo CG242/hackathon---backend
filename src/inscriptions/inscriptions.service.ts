@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { HackathonStatus } from '@prisma/client';
 import { EventsGateway } from '../events/events.gateway';
@@ -53,7 +58,7 @@ export class InscriptionsService {
 
     // Vérifier les permissions : l'utilisateur peut voir sa propre inscription ou l'admin peut voir toutes
     if (userRole !== 'ADMIN' && inscription.userId !== userId) {
-      throw new ForbiddenException('Vous n\'avez pas accès à cette inscription');
+      throw new ForbiddenException("Vous n'avez pas accès à cette inscription");
     }
 
     return inscription;
@@ -66,13 +71,17 @@ export class InscriptionsService {
     });
 
     if (!hackathon) {
-      throw new NotFoundException(`Hackathon avec l'ID ${hackathonId} non trouvé`);
+      throw new NotFoundException(
+        `Hackathon avec l'ID ${hackathonId} non trouvé`,
+      );
     }
 
     // Vérifier la deadline d'inscription
     const maintenant = new Date();
     if (new Date(hackathon.dateLimiteInscription) < maintenant) {
-      throw new BadRequestException('La date limite d\'inscription est dépassée');
+      throw new BadRequestException(
+        "La date limite d'inscription est dépassée",
+      );
     }
 
     // Vérifier que le hackathon est encore ouvert aux inscriptions
@@ -141,7 +150,9 @@ export class InscriptionsService {
 
     // Vérifier les permissions
     if (userRole !== 'ADMIN' && inscription.userId !== userId) {
-      throw new ForbiddenException('Vous n\'avez pas le droit de supprimer cette inscription');
+      throw new ForbiddenException(
+        "Vous n'avez pas le droit de supprimer cette inscription",
+      );
     }
 
     await this.prisma.inscription.delete({
@@ -151,6 +162,120 @@ export class InscriptionsService {
     return { message: 'Inscription supprimée avec succès' };
   }
 
+  async deleteUserInscription(userId: string, hackathonId: string) {
+    // Vérifier que l'inscription existe
+    const inscription = await this.prisma.inscription.findUnique({
+      where: {
+        userId_hackathonId: {
+          userId,
+          hackathonId,
+        },
+      },
+      include: {
+        user: {
+          select: {
+            email: true,
+            nom: true,
+            prenom: true,
+          },
+        },
+        hackathon: {
+          select: {
+            nom: true,
+          },
+        },
+      },
+    });
+
+    if (!inscription) {
+      throw new NotFoundException(
+        `Inscription de l'utilisateur ${userId} au hackathon ${hackathonId} non trouvée`,
+      );
+    }
+
+    // NOTE: Plus de retrait automatique des présélections
+    // La présélection est gérée uniquement via l'upload PDF
+
+    // Supprimer l'inscription
+    await this.prisma.inscription.delete({
+      where: {
+        userId_hackathonId: {
+          userId,
+          hackathonId,
+        },
+      },
+    });
+
+
+    // Récupérer les informations détaillées du hackathon
+    const hackathonDetails = await this.prisma.hackathon.findUnique({
+      where: { id: hackathonId },
+      select: {
+        id: true,
+        nom: true,
+        description: true,
+        dateDebut: true,
+        dateFin: true,
+        status: true,
+        _count: {
+          select: {
+            inscriptions: true,
+          },
+        },
+      },
+    });
+
+    // Récupérer les informations de présélection si elles existent
+    const preselectionInfo = await this.prisma.resultats.findUnique({
+      where: { hackathonId },
+      select: {
+        preselectionnes: true,
+        preselectionsPubliees: true,
+        documentPreselectionsName: true,
+      },
+    });
+
+    const isPreselected = false; // Plus de tracking automatique des présélections
+
+    return {
+      message: `Utilisateur supprimé avec succès du hackathon "${hackathonDetails?.nom}"`,
+      details: {
+        utilisateur: {
+          id: userId, // Utiliser le paramètre au lieu de inscription.user.id
+          email: inscription.user.email,
+          nom: inscription.user.nom,
+          prenom: inscription.user.prenom,
+          nomComplet: `${inscription.user.prenom} ${inscription.user.nom}`,
+        },
+        hackathon: {
+          id: hackathonDetails?.id,
+          nom: hackathonDetails?.nom,
+          description: hackathonDetails?.description,
+          dateDebut: hackathonDetails?.dateDebut,
+          dateFin: hackathonDetails?.dateFin,
+          status: hackathonDetails?.status,
+          totalInscrits: hackathonDetails?._count?.inscriptions || 0,
+        },
+        preselections: {
+          etaitPreselectionne: false, // Plus de tracking automatique
+          preselectionsPubliees: preselectionInfo?.preselectionsPubliees || false,
+          documentPreselections: preselectionInfo?.documentPreselectionsName || null,
+        },
+      },
+      action: {
+        type: 'SUPPRESSION_INSCRIPTION',
+        timestamp: new Date().toISOString(),
+        utilisateurConcerne: inscription.user.email,
+        hackathonConcerne: hackathonDetails?.nom,
+        impactPreselections: 'ℹ️ Présélections gérées uniquement via upload PDF',
+        detailsSupplementaires: {
+          totalInscritsRestants: (hackathonDetails?._count?.inscriptions || 1) - 1,
+          preselectionsRestantes: (preselectionInfo?.preselectionnes as string[] | null)?.length || 0,
+        },
+      },
+    };
+  }
+
   async getInscriptionsByHackathon(hackathonId: string) {
     // Vérifier que le hackathon existe
     const hackathon = await this.prisma.hackathon.findUnique({
@@ -158,7 +283,9 @@ export class InscriptionsService {
     });
 
     if (!hackathon) {
-      throw new NotFoundException(`Hackathon avec l'ID ${hackathonId} non trouvé`);
+      throw new NotFoundException(
+        `Hackathon avec l'ID ${hackathonId} non trouvé`,
+      );
     }
 
     return this.prisma.inscription.findMany({
@@ -180,4 +307,3 @@ export class InscriptionsService {
     });
   }
 }
-
