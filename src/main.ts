@@ -1,44 +1,61 @@
-// 🚨 VERSION ULTRA-MINIMALE POUR RENDER FREE (512MB RAM)
-// CHARGEMENT ABSOLUMENT MINIMAL - AUCUNE FONCTIONNALITÉ LOURDE
+// ✅ VERSION COMPLÈTE AVEC TOUTES LES FONCTIONNALITÉS
+// Backend NestJS complet restauré
 
 import { NestFactory } from '@nestjs/core';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  try {
-    // 🚨 LOGGER COMPLÈTEMENT DÉSACTIVÉ pour économiser RAM
-    const app = await NestFactory.create(AppModule, {
-      logger: false, // PAS DE LOG DU TOUT
-    });
+  const app = await NestFactory.create(AppModule);
 
-    // 🚨 CORS ULTRA-SIMPLE
-    app.enableCors({
-      origin: true, // Accepter tout pour l'instant
-      credentials: false,
-    });
+  // Configuration CORS complète
+  app.enableCors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
 
-    // 🚨 PORT FIXE POUR RENDER (pas de fallback)
-    const port = parseInt(process.env.PORT || '10000');
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://localhost:5173',
+        'http://localhost:9002',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:5173',
+        'http://127.0.0.1:9002',
+        'https://hackathon-frontend.onrender.com',
+        'http://192.168.',
+        'http://10.',
+      ].filter(Boolean);
 
-    // 🚨 DÉMARRAGE SYNCHRONE - pas d'await pour économiser mémoire
-    app.listen(port, '0.0.0.0').then(() => {
-      // 🚨 LOG MINIMAL ABSOLUMENT ESSENTIEL
-      console.log(`OK:${port}`); // Format simple pour Render
-    }).catch((error) => {
-      console.error(`ERROR:${error.message}`);
-      process.exit(1);
-    });
+      if (allowedOrigins.some(o => origin.startsWith(o))) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
 
-  } catch (error) {
-    console.error(`FATAL:${error.message}`);
-    process.exit(1);
+  // Swagger pour la documentation API
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('API Hackathon')
+      .setDescription('API complète pour la gestion des hackathons')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, document);
+  }
+
+  const port = process.env.PORT || 3000;
+  await app.listen(port, '0.0.0.0');
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`🚀 Application is running on: http://localhost:${port}`);
+    console.log(`📚 Swagger: http://localhost:${port}/api`);
   }
 }
-
-// 🚨 GESTION D'ERREUR MINIMALE
-process.on('uncaughtException', (error) => {
-  console.error(`CRASH:${error.message}`);
-  process.exit(1);
-});
 
 bootstrap();

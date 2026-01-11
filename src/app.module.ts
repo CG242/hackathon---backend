@@ -3,28 +3,32 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { EmailModule } from './email/email.module';
+import { QueueModule } from './queue/queue.module';
 import { HackathonModule } from './hackathon/hackathon.module';
+import { AnnonceModule } from './annonce/annonce.module';
+import { AdminModule } from './admin/admin.module';
+import { AiModule } from './ai/ai.module';
+import { EventsModule } from './events/events.module';
 import { InscriptionsModule } from './inscriptions/inscriptions.module';
+import { ResultatsModule } from './resultats/resultats.module';
+import { TeamsModule } from './teams/teams.module';
 
 @Module({
   imports: [
-    // 🚨 VERSION ULTRA-MINIMALE POUR RENDER FREE
-    // Seuls les modules essentiels sont chargés au démarrage
+    // ✅ TOUS LES MODULES ORIGINAUX RESTAURÉS
     PrismaModule,
     AuthModule,
+    EmailModule,
+    QueueModule,
     HackathonModule,
+    AnnonceModule,
+    AdminModule,
+    AiModule,
+    EventsModule,
     InscriptionsModule,
-
-    // 🚫 MODULES LOURDS DÉSACTIVÉS TEMPORAIREMENT
-    // Ils consomment trop de RAM pour 512MB disponibles
-    // EmailModule,     // ~20MB (nodemailer)
-    // QueueModule,     // ~15MB (bull/Redis)
-    // AiModule,        // ~50MB+ (dépendances IA)
-    // EventsModule,    // ~25MB (socket.io)
-    // AnnonceModule,   // ~10MB
-    // AdminModule,     // ~15MB
-    // ResultatsModule, // ~10MB
-    // TeamsModule,     // ~10MB
+    ResultatsModule,
+    TeamsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
