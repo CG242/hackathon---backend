@@ -75,6 +75,7 @@ model User {
   iaLogs                 IALog[]
   evenementsSurveillance EvenementSurveillance[]
   notifications          Notification[]
+  teams                  TeamMember[]
 
   @@index([email])
   @@index([role])
@@ -82,18 +83,20 @@ model User {
 }
 
 model Hackathon {
-  id                    String          @id @default(uuid())
+  id                    String             @id @default(uuid())
   nom                   String
   description           String
   themes                Json? // JSONB pour matching IA
   dateDebut             DateTime
   dateFin               DateTime
   dateLimiteInscription DateTime
-  status                HackathonStatus @default(UPCOMING)
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
+  status                HackathonStatus    @default(UPCOMING)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
   inscriptions          Inscription[]
   annonces              Annonce[]
+  resultat              ResultatHackathon?
+  teams                 Team[]
 
   @@index([status, dateDebut])
   @@index([dateLimiteInscription])
@@ -211,4 +214,158 @@ model AnalyseIA {
   @@index([scoreMatching])
   @@index([scoreSpam])
   @@index([createdAt])
+}
+
+// Modèle pour stocker les résultats du hackathon
+model ResultatHackathon {
+  id                           String    @id @default(uuid())
+  hackathonId                  String    @unique
+  premierPlace                 String? // Nom du projet gagnant (1ère place)
+  deuxiemePlace                String? // Nom du projet gagnant (2ème place)
+  troisiemePlace               String? // Nom du projet gagnant (3ème place)
+  preselectionnes              Json? // JSONB - Liste des emails des présélectionnés
+  podiumPublie                 Boolean   @default(false)
+  preselectionsPubliees        Boolean   @default(false)
+  documentPreselectionsPath    String? // Chemin du fichier PDF des présélections
+  documentPreselectionsName    String? // Nom original du fichier PDF
+  documentPreselectionsUploadedAt DateTime? // Date d'upload du document
+  createdAt                    DateTime  @default(now())
+  updatedAt                    DateTime  @updatedAt
+  hackathon                    Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+
+  @@index([hackathonId])
+  @@index([podiumPublie])
+  @@index([preselectionsPubliees])
+}
+
+// Modèle pour les équipes
+model Team {
+  id          String       @id @default(uuid())
+  nom         String // Nom de l'équipe
+  description String? // Description optionnelle
+  hackathonId String // Hackathon auquel l'équipe appartient
+  projetNom   String? // Nom du projet associé (peut être utilisé pour les résultats)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  hackathon   Hackathon    @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  members     TeamMember[]
+
+  @@index([hackathonId])
+  @@index([projetNom])
+}
+
+// Table de jointure pour la relation many-to-many entre User et Team
+model TeamMember {
+  id        String   @id @default(uuid())
+  teamId    String
+  userId    String
+  role      String? // Rôle dans l'équipe (ex: "Chef de projet", "Développeur", etc.)
+  createdAt DateTime @default(now())
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+}
+
+
+// Modèle pour les équipes
+model Team {
+  id          String       @id @default(uuid())
+  nom         String // Nom de l'équipe
+  description String? // Description optionnelle
+  hackathonId String // Hackathon auquel l'équipe appartient
+  projetNom   String? // Nom du projet associé (peut être utilisé pour les résultats)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  hackathon   Hackathon    @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  members     TeamMember[]
+
+  @@index([hackathonId])
+  @@index([projetNom])
+}
+
+// Table de jointure pour la relation many-to-many entre User et Team
+model TeamMember {
+  id        String   @id @default(uuid())
+  teamId    String
+  userId    String
+  role      String? // Rôle dans l'équipe (ex: "Chef de projet", "Développeur", etc.)
+  createdAt DateTime @default(now())
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+}
+
+  @@index([hackathonId])
+}
+
+// Modèle pour les équipes
+model Team {
+  id          String       @id @default(uuid())
+  nom         String // Nom de l'équipe
+  description String? // Description optionnelle
+  hackathonId String // Hackathon auquel l'équipe appartient
+  projetNom   String? // Nom du projet associé (peut être utilisé pour les résultats)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  hackathon   Hackathon    @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  members     TeamMember[]
+
+  @@index([hackathonId])
+  @@index([projetNom])
+}
+
+// Table de jointure pour la relation many-to-many entre User et Team
+model TeamMember {
+  id        String   @id @default(uuid())
+  teamId    String
+  userId    String
+  role      String? // Rôle dans l'équipe (ex: "Chef de projet", "Développeur", etc.)
+  createdAt DateTime @default(now())
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+}
+
+  @@index([podiumPublie])
+  @@index([preselectionsPubliees])
+}
+
+// Modèle pour les équipes
+model Team {
+  id          String       @id @default(uuid())
+  nom         String // Nom de l'équipe
+  description String? // Description optionnelle
+  hackathonId String // Hackathon auquel l'équipe appartient
+  projetNom   String? // Nom du projet associé (peut être utilisé pour les résultats)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  hackathon   Hackathon    @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  members     TeamMember[]
+
+  @@index([hackathonId])
+  @@index([projetNom])
+}
+
+// Table de jointure pour la relation many-to-many entre User et Team
+model TeamMember {
+  id        String   @id @default(uuid())
+  teamId    String
+  userId    String
+  role      String? // Rôle dans l'équipe (ex: "Chef de projet", "Développeur", etc.)
+  createdAt DateTime @default(now())
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
 }
