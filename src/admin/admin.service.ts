@@ -19,35 +19,52 @@ export class AdminService {
   ) {}
 
   /**
-   * Récupérer toutes les inscriptions (Admin uniquement)
+   * Récupérer toutes les inscriptions avec pagination (Admin uniquement)
    */
-  async getAllInscriptions() {
-    return this.prisma.inscription.findMany({
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            nom: true,
-            prenom: true,
-            role: true,
+  async getAllInscriptions(page: number = 1, limit: number = 50) {
+    const skip = (page - 1) * limit;
+
+    const [inscriptions, total] = await Promise.all([
+      this.prisma.inscription.findMany({
+        skip,
+        take: limit,
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              nom: true,
+              prenom: true,
+              role: true,
+            },
+          },
+          hackathon: {
+            select: {
+              id: true,
+              nom: true,
+              description: true,
+              dateDebut: true,
+              dateFin: true,
+              status: true,
+            },
           },
         },
-        hackathon: {
-          select: {
-            id: true,
-            nom: true,
-            description: true,
-            dateDebut: true,
-            dateFin: true,
-            status: true,
-          },
+        orderBy: {
+          createdAt: 'desc',
         },
+      }),
+      this.prisma.inscription.count(),
+    ]);
+
+    return {
+      data: inscriptions,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    };
   }
 
   /**
@@ -113,28 +130,45 @@ export class AdminService {
   }
 
   /**
-   * Récupérer tous les utilisateurs (Admin uniquement)
+   * Récupérer tous les utilisateurs avec pagination (Admin uniquement)
    */
-  async getAllUsers() {
-    return this.prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        nom: true,
-        prenom: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-        _count: {
-          select: {
-            inscriptions: true,
+  async getAllUsers(page: number = 1, limit: number = 50) {
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          email: true,
+          nom: true,
+          prenom: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true,
+          _count: {
+            select: {
+              inscriptions: true,
+            },
           },
         },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prisma.user.count(),
+    ]);
+
+    return {
+      data: users,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    };
   }
 
   /**
@@ -244,31 +278,23 @@ export class AdminService {
       },
     });
 
-    // Inscriptions par promo (promo est maintenant dans Inscription)
-    const inscriptionsAvecPromo = await this.prisma.inscription.findMany({
+    // Inscriptions par promo - optimisation avec groupBy
+    const parPromoRaw = await this.prisma.inscription.groupBy({
+      by: ['promo'],
       where: {
         hackathonId: hackathonActuel.id,
       },
-      select: {
+      _count: {
         promo: true,
       },
     });
 
-    const parPromoMap = new Map<string, number>();
-    inscriptionsAvecPromo.forEach((inscription) => {
-      // promo peut être null, donc on utilise 'Non renseignée' par défaut
-      const promo = inscription.promo || 'Non renseignée';
-      parPromoMap.set(promo, (parPromoMap.get(promo) || 0) + 1);
-    });
+    const parPromo = parPromoRaw.map((group) => ({
+      promo: group.promo || 'Non renseignée',
+      count: group._count.promo,
+    }));
 
-    const parPromo = Array.from(parPromoMap.entries()).map(
-      ([promo, count]) => ({
-        promo,
-        count,
-      }),
-    );
-
-    // Inscriptions par technologie (technologies est maintenant dans Inscription)
+    // Inscriptions par technologie - optimisation pour éviter de charger toutes les données
     const inscriptionsAvecTech = await this.prisma.inscription.findMany({
       where: {
         hackathonId: hackathonActuel.id,
@@ -276,11 +302,11 @@ export class AdminService {
       select: {
         technologies: true,
       },
+      take: 1000, // Limite raisonnable pour le dashboard
     });
 
     const parTechnologieMap = new Map<string, number>();
     inscriptionsAvecTech.forEach((inscription) => {
-      // technologies est maintenant un Json dans Inscription
       if (inscription.technologies) {
         const techs = Array.isArray(inscription.technologies)
           ? inscription.technologies
@@ -296,7 +322,8 @@ export class AdminService {
         technologie,
         count,
       }))
-      .sort((a, b) => b.count - a.count); // Trier par nombre décroissant
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 20); // Garder seulement les 20 technologies les plus populaires
 
     const stats = {
       hackathon: {

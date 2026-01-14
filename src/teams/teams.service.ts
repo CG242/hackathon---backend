@@ -39,49 +39,83 @@ export class TeamsService {
     });
   }
 
-  async getPublicTeamsByHackathon(hackathonId: string) {
+  async getPublicTeamsByHackathon(hackathonId: string, page: number = 1, limit: number = 20) {
     const hackathon = await this.prisma.hackathon.findUnique({
       where: { id: hackathonId },
     });
     if (!hackathon)
       throw new NotFoundException(`Hackathon ${hackathonId} introuvable`);
 
-    return this.prisma.team.findMany({
-      where: { hackathonId },
-      select: {
-        id: true,
-        nom: true,
-        description: true,
-        projetNom: true,
-        createdAt: true,
-        _count: {
-          select: { members: true }
-        }
+    const skip = (page - 1) * limit;
+
+    const [teams, total] = await Promise.all([
+      this.prisma.team.findMany({
+        where: { hackathonId },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          nom: true,
+          description: true,
+          projetNom: true,
+          createdAt: true,
+          _count: {
+            select: { members: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.team.count({ where: { hackathonId } }),
+    ]);
+
+    return {
+      data: teams,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
-      orderBy: { createdAt: 'desc' },
-    });
+    };
   }
 
-  async getTeamsByHackathon(hackathonId: string) {
+  async getTeamsByHackathon(hackathonId: string, page: number = 1, limit: number = 20) {
     const hackathon = await this.prisma.hackathon.findUnique({
       where: { id: hackathonId },
     });
     if (!hackathon)
       throw new NotFoundException(`Hackathon ${hackathonId} introuvable`);
 
-    return this.prisma.team.findMany({
-      where: { hackathonId },
-      include: {
-        members: {
-          include: {
-            user: {
-              select: { id: true, email: true, nom: true, prenom: true },
+    const skip = (page - 1) * limit;
+
+    const [teams, total] = await Promise.all([
+      this.prisma.team.findMany({
+        where: { hackathonId },
+        skip,
+        take: limit,
+        include: {
+          members: {
+            include: {
+              user: {
+                select: { id: true, email: true, nom: true, prenom: true },
+              },
             },
           },
         },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.team.count({ where: { hackathonId } }),
+    ]);
+
+    return {
+      data: teams,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
-      orderBy: { createdAt: 'desc' },
-    });
+    };
   }
 
   async getTeamById(teamId: string) {

@@ -1,0 +1,70 @@
+# 🚀 DÉPLOIEMENT RENDER PRÊT !
+
+# ============================================
+# VARIABLES D'ENVIRONNEMENT À AJOUTER DANS RENDER
+# ============================================
+
+# VARIABLE 1: DATABASE_URL (OBLIGATOIRE)
+NAME: DATABASE_URL
+VALUE: postgresql://hackathon_db_3h8o_user:pnfvc3Pb8A5yNwQ2ar0r8tQo7dpyxrgH@dpg-d5hq3aidbo4c73e65950-a.frankfurt-postgres.render.com:5432/hackathon_db_3h8o
+
+# VARIABLE 2: JWT_SECRET (OBLIGATOIRE)
+NAME: JWT_SECRET
+VALUE: hackathon-secret-jwt-key-2026-production-super-secure-123456789!@#$%^&*()
+
+# VARIABLE 3: NODE_ENV (RECOMMANDÉ)
+NAME: NODE_ENV
+VALUE: production
+
+# ============================================
+# CONFIGURATION DU SERVICE RENDER
+# ============================================
+
+# Build Command:
+npm run build
+
+# Start Command:
+npm start
+
+# ============================================
+# VÉRIFICATION LOCALE AVANT DÉPLOIEMENT
+# ============================================
+# Testez d'abord localement avec ces commandes :
+
+# 1. Test de connexion à la base
+npx prisma db push --accept-data-loss
+
+# 2. Génération du client Prisma
+npx prisma generate
+
+# 3. Test du build
+npm run build
+
+# 4. Test de démarrage (optionnel)
+npm start
+
+# ============================================
+# APRÈS DÉPLOIEMENT SUR RENDER
+# ============================================
+# Dans le shell de Render, exécutez :
+npx prisma migrate deploy
+npx prisma generate
+
+# ============================================
+# URLs À TESTER APRÈS DÉPLOIEMENT
+# ============================================
+# Remplacez [VOTRE_URL_RENDER] par l'URL de votre service Render
+# Exemple: https://votre-service.onrender.com
+
+API_BASE_URL: [VOTRE_URL_RENDER]
+
+# Endpoints à tester :
+# - GET [VOTRE_URL_RENDER]/health
+# - GET [VOTRE_URL_RENDER]/api
+
+# ============================================
+# MÉMO DES VALEURS
+# ============================================
+DATABASE_URL: postgresql://hackathon_db_3h8o_user:pnfvc3Pb8A5yNwQ2ar0r8tQo7dpyxrgH@dpg-d5hq3aidbo4c73e65950-a.frankfurt-postgres.render.com:5432/hackathon_db_3h8o
+JWT_SECRET: hackathon-secret-jwt-key-2026-production-super-secure-123456789!@#$%^&*()
+NODE_ENV: production

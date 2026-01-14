@@ -1,0 +1,33 @@
+# CONFIGURATION RENDER - VARIABLES D'ENVIRONNEMENT
+# À COPIER DANS L'INTERFACE RENDER
+
+# ============================================
+# VARIABLE 1: DATABASE_URL (OBLIGATOIRE)
+# ============================================
+NAME: DATABASE_URL
+VALUE: postgresql://hackathon_db_3h8o_user:[VOTRE_MOT_DE_PASSE_COMPLET]@dpg-d5hq3aidbo4c73e65950-a:5432/hackathon_db_3h8o
+
+# ============================================
+# VARIABLE 2: JWT_SECRET (OBLIGATOIRE)
+# ============================================
+NAME: JWT_SECRET
+VALUE: votre-cle-secrete-jwt-super-longue-et-complexe-avec-des-chiffres-et-symboles-123456789!@#
+
+# ============================================
+# VARIABLE 3: NODE_ENV (RECOMMANDÉ)
+# ============================================
+NAME: NODE_ENV
+VALUE: production
+
+# ============================================
+# INSTRUCTIONS POUR REMPLIR CHAQUE CHAMP
+# ============================================
+#
+# Dans l'interface Render :
+#
+# 1. Cliquez sur "Ajouter la variable d’environnement"
+# 2. Dans "NAME_OF_VARIABLE" mettez : DATABASE_URL
+# 3. Dans "Valeur" mettez : postgresql://hackathon_db_3h8o_user:[mot_de_passe]@dpg-d5hq3aidbo4c73e65950-a:5432/hackathon_db_3h8o
+# 4. Cliquez sur "Ajouter"
+#
+# Répétez pour JWT_SECRET et NODE_ENV

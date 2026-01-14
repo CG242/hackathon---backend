@@ -1,0 +1,51 @@
+# GUIDE : Où Trouver Chaque Partie de DATABASE_URL dans Render
+
+URL COMPLÈTE À CONSTRUIRE :
+postgresql://[USERNAME]:[PASSWORD]@[HOST]:[PORT]/[DATABASE]
+
+# ============================================
+# ÉTAPE 1 : Ouvrez votre base de données Render
+# ============================================
+1. Allez sur https://dashboard.render.com/
+2. Cliquez sur votre base de données "hackathon-database"
+3. Cliquez sur l'onglet "Connections"
+
+# ============================================
+# ÉTAPE 2 : Trouvez chaque valeur
+# ============================================
+
+## 🔍 USERNAME (hackathon_db_3h8o_user)
+LOCATION: Section "Connections" > "Username"
+VALEUR: hackathon_db_3h8o_user
+
+## 🔍 PASSWORD (mot de passe caché avec ••••••••)
+LOCATION: Section "Connections" > "Password"
+ACTION: Cliquez sur l'œil pour révéler le mot de passe COMPLET
+VALEUR: [COPIEZ TOUT LE TEXTE RÉVÉLÉ]
+
+## 🔍 HOST (dpg-d5hq3aidbo4c73e65950-a)
+LOCATION: Section "Connections" > "Host"
+VALEUR: dpg-d5hq3aidbo4c73e65950-a
+
+## 🔍 PORT (5432)
+LOCATION: Section "Connections" > "Port"
+VALEUR: 5432
+
+## 🔍 DATABASE (hackathon_db_3h8o)
+LOCATION: Section "Connections" > "Database"
+VALEUR: hackathon_db_3h8o
+
+# ============================================
+# ÉTAPE 3 : Construisez l'URL complète
+# ============================================
+Remplacez [PASSWORD] par votre vrai mot de passe :
+
+postgresql://hackathon_db_3h8o_user:VOTRE_VRAI_MOT_DE_PASSE_COMPLET@dpg-d5hq3aidbo4c73e65950-a:5432/hackathon_db_3h8o
+
+# ============================================
+# EXEMPLE AVEC MOT DE PASSE FICTIF
+# ============================================
+postgresql://hackathon_db_3h8o_user:abcd1234efgh5678@dpg-d5hq3aidbo4c73e65950-a:5432/hackathon_db_3h8o
+
+⚠️ IMPORTANT : Le mot de passe est TRÈS long (64+ caractères)
+   Assurez-vous de le copier ENTIEREMENT !

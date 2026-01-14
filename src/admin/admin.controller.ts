@@ -70,14 +70,29 @@ export class AdminController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Récupérer toutes les inscriptions (Admin uniquement)',
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Numéro de page (défaut: 1)',
   })
-  @ApiResponse({ status: 200, description: 'Liste de toutes les inscriptions' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: "Nombre d'inscriptions par page (défaut: 50)",
+  })
+  @ApiOperation({
+    summary: 'Récupérer toutes les inscriptions avec pagination (Admin uniquement)',
+  })
+  @ApiResponse({ status: 200, description: 'Liste paginée des inscriptions' })
   @ApiResponse({ status: 401, description: 'Non autorisé' })
   @ApiResponse({ status: 403, description: 'Accès refusé - Admin uniquement' })
-  async getAllInscriptions() {
-    return this.adminService.getAllInscriptions();
+  async getAllInscriptions(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+  ) {
+    return this.adminService.getAllInscriptions(page, limit);
   }
 
   @Get('monitoring/logs')
@@ -178,14 +193,29 @@ export class AdminController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Récupérer tous les utilisateurs (Admin uniquement)',
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Numéro de page (défaut: 1)',
   })
-  @ApiResponse({ status: 200, description: 'Liste de tous les utilisateurs' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: "Nombre d'utilisateurs par page (défaut: 50)",
+  })
+  @ApiOperation({
+    summary: 'Récupérer tous les utilisateurs avec pagination (Admin uniquement)',
+  })
+  @ApiResponse({ status: 200, description: 'Liste paginée des utilisateurs' })
   @ApiResponse({ status: 401, description: 'Non autorisé' })
   @ApiResponse({ status: 403, description: 'Accès refusé - Admin uniquement' })
-  async getAllUsers() {
-    return this.adminService.getAllUsers();
+  async getAllUsers(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+  ) {
+    return this.adminService.getAllUsers(page, limit);
   }
 
   @Put('users/:id')
